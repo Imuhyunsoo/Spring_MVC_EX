@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 매퍼 만들때 경로 설정 복붙하지만 말고 검토하자.-->
+<mapper namespace="edu.global.ex.mapper.VotingMapper">
+
+    <select id="getCandidateList" resultType="edu.global.ex.vo.VotingVO.CandidateVO">
+        <![CDATA[
+            SELECT M_NO, M_NAME, P_NAME, (CASE P_SCHOOL
+                                  WHEN '1' THEN '고졸'
+                                  WHEN '2' THEN '학사'
+                                  WHEN '3' THEN '석사'
+                                  WHEN '4' THEN '박사' END)
+                                  AS P_SCHOOL, CONCAT(CONCAT(SUBSTR(M_JUMIN, 1, 6), '-'), SUBSTR(M_JUMIN, 7, 7)) AS M_JUMIN, M_CITY,
+                                  CONCAT(CONCAT(CONCAT(P_TEL1, '-'),CONCAT(P_TEL2, '-')), P_TEL3) AS TEL
+            FROM TBL_MEMBER_202005 MEMBER, TBL_PARTY_202005 PARTY
+            WHERE MEMBER.P_CODE = PARTY.P_CODE
+        ]]>
+    </select>
+
+    <select id="getVoterList" resultType="edu.global.ex.vo.VotingVO.VoterVO">
+        <![CDATA[
+            SELECT V_NAME, CONCAT(CONCAT(CONCAT('19',CONCAT(SUBSTR(V_JUMIN, 1, 2), '년')),
+                           CONCAT(SUBSTR(V_JUMIN, 3, 2), '월')), CONCAT(SUBSTR(V_JUMIN,4,2), '일생')) AS V_JUMIN,
+                           CONCAT('만 ',CONCAT(EXTRACT(YEAR FROM SYSDATE) -
+                           (DECODE(SUBSTR(V_JUMIN,7,1),'1', '19','2','19','20') || SUBSTR(V_JUMIN,1,2)),'세'))  as V_AGE,
+                           CASE SUBSTR(V_JUMIN,7,1)
+                           WHEN '1' THEN '남'
+                           WHEN '2' THEN '여'
+                           END AS V_GENDER,M_NO,
+                           CONCAT(CONCAT(SUBSTR(V_TIME, 1, 2), ':'), SUBSTR(V_TIME,3,2)) AS V_TIME,
+                           CASE V_CONFIRM
+                           WHEN 'Y' THEN '확인'
+                           WHEN 'N' THEN '미확인'
+                           END AS V_CONFIRM
+            FROM TBL_VOTE_202005
+        ]]>
+    </select>
+
+    <select id="getRanking" resultType="edu.global.ex.vo.VotingVO.RankVO">
+        <![CDATA[
+            SELECT VOTE.M_NO AS M_NO, M_NAME, TOTAL AS M_TOTAL FROM (SELECT DISTINCT MEMBER.M_NO, MEMBER.M_NAME
+            FROM TBL_MEMBER_202005 MEMBER, TBL_VOTE_202005 VOTE
+            WHERE VOTE.M_NO = MEMBER.M_NO) VOTE, (SELECT M_NO, COUNT(*) AS TOTAL FROM TBL_VOTE_202005 GROUP BY M_NO) TOTAL
+            WHERE VOTE.M_NO = TOTAL.M_NO ORDER BY TOTAL DESC
+        ]]>
+    </select>
+
+    <select id="getCandidateNum" resultType="String">
+        <![CDATA[
+            SELECT M_NO FROM TBL_MEMBER_202005
+        ]]>
+    </select>
+
+    <insert id="insertVote">
+        <![CDATA[
+            INSERT INTO TBL_VOTE_202005 (V_JUMIN, V_NAME, M_NO, V_TIME, V_AREA, V_CONFIRM)
+            VALUES (#{v_jumin}, #{v_name}, #{m_no}, #{v_time}, #{v_area}, #{v_confirm})
+        ]]>
+    </insert>
+
+</mapper>

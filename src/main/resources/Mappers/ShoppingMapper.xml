@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 매퍼 만들때 경로 설정 복붙하지만 말고 검토하자.-->
+<mapper namespace="edu.global.ex.mapper.ShoppingMapper">
+
+    <select id="getMemberList" resultType="edu.global.ex.vo.ShoppingVO.MemberVO">
+        <![CDATA[
+            SELECT CUSTNO, CUSTNAME, PHONE, ADDRESS, JOINDATE,
+                    CASE GRADE
+                    WHEN 'A' THEN 'VIP'
+                    WHEN 'B' THEN '일반'
+                    WHEN 'C' THEN '직원'
+                    END AS GRADE, CITY FROM MEMBER_TBL_02 ORDER BY CUSTNO ASC
+        ]]>
+    </select>
+
+    <select id="getSalesList" resultType="edu.global.ex.vo.ShoppingVO.SalesVO">
+        <![CDATA[
+            SELECT DISTINCT MEMBER_TBL_02.CUSTNO, MEMBER_TBL_02.CUSTNAME, CASE GRADE
+                    WHEN 'A' THEN 'VIP'
+                    WHEN 'B' THEN '일반'
+                    WHEN 'C' THEN '직원'
+                    END AS GRADE, PRICE.SALES
+                    FROM MEMBER_TBL_02,MONEY_TBL_02 ,(SELECT CUSTNO,SUM(PRICE) AS SALES FROM MONEY_TBL_02 GROUP BY CUSTNO) PRICE
+                    WHERE MEMBER_TBL_02.CUSTNO = MONEY_TBL_02.CUSTNO AND MEMBER_TBL_02.CUSTNO = PRICE.CUSTNO
+                    ORDER BY PRICE.SALES DESC
+        ]]>
+    </select>
+
+    <select id="getCustno" resultType="string">
+        <![CDATA[
+            SELECT MAX(CUSTNO) + 1 AS CUSTNO FROM MEMBER_TBL_02
+        ]]>
+    </select>
+
+    <insert id="insertMember">
+        <![CDATA[
+            INSERT INTO member_tbl_02 (CUSTNO, CUSTNAME, PHONE, ADDRESS, JOINDATE, GRADE, CITY)
+            VALUES (#{custno},#{custname},#{phone},#{address},#{joindate},#{grade},#{city})
+        ]]>
+    </insert>
+
+    <select id="getContent" resultType="edu.global.ex.vo.ShoppingVO.MemberVO">
+        <![CDATA[
+            SELECT * FROM MEMBER_TBL_02 WHERE CUSTNO = #{custno}
+        ]]>
+    </select>
+
+    <update id="updateContent">
+        <![CDATA[
+            UPDATE MEMBER_TBL_02
+            SET CUSTNAME = #{custname}, PHONE = #{phone}, ADDRESS = #{address}, JOINDATE = #{joindate}, GRADE = #{grade}, CITY = #{city}
+            WHERE CUSTNO = #{custno}
+        ]]>
+    </update>
+
+</mapper>
